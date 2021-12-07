@@ -49,6 +49,11 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL]
+  res.redirect(longURL);
+});
+
 app.get("/set", (req, res) => {
   const a = 1;
   res.send(`a = ${a}`);
@@ -60,7 +65,22 @@ app.get("/fetch", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  //dont need res.send("Ok") because we redirecting insted
+  // res.send("Ok");         // Respond with 'Ok' (we will replace this)
+
+  //Update server shortURl and longUrl are saved to urlDatabase,**Double check!!!
+  //ADDING TO urlDATABASE
+  //Do i need to stringify???
+  //TAKE IN DATA USE REQ
+  //PUSH DATA USE RES, also redirect or render
+  let newShortURL = generateRandomString()
+  urlDatabase[newShortURL] = req.body.longURL
+
+
+  //respond with a redirection to /urls/:shortURL, where shortURL is the random string
+  //do i need the colen after urls??
+  res.redirect(`/urls/${newShortURL}`)
+
 });
 
 app.listen(PORT, () => {
