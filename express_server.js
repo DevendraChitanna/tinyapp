@@ -62,7 +62,26 @@ app.get("/set", (req, res) => {
 app.get("/fetch", (req, res) => {
   res.send(`a = ${a}`);
 });
+//****************************************************** */
+//UPDATE
+app.post("/urls/:shortURL/update", (req, res) => {
+  console.log(req.params.shortURL)
+  urlDatabase[req.params.shortURL] = req.body.longURL
+  res.redirect("/urls")
+})
+//**************************************************************** */
+// //REDIRECT when click update from index page
+//could of use GET route by changing index ejs, update button route and method
+app.post("/urls/:shortURL", (req, res) => {
 
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]/* What goes here? */ };
+  res.render("urls_show", templateVars);
+});
+
+
+
+
+//********************************************************************** */
 //: after colon is a variable
 app.post("/urls/:shortURL/delete", (req, res) => {
   console.log("BEFORE", urlDatabase);
@@ -89,6 +108,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newShortURL}`)
 
 });
+//********************************************************************* */
 
 
 app.listen(PORT, () => {
