@@ -11,6 +11,9 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser')
+
+app.use(cookieParser())
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -28,19 +31,24 @@ app.get("/", (req, res) => {
 //***************************************************** */
 //Home page - list of all URLS
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 //*************************************************** */
 //Page to create new URLs
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"] }
+  res.render("urls_new", templateVars);
 });
 //***************************************************** */
 //get url page with short url as a variable(shortURL is the key)
 app.get("/urls/:shortURL", (req, res) => {
   //what does this line do? and what is the req.params. Why do we need it? 
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]/* What goes here? */ };
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],/* What goes here? */
+    username: req.body.username
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -68,6 +76,23 @@ app.get("/set", (req, res) => {
 app.get("/fetch", (req, res) => {
   res.send(`a = ${a}`);
 });
+
+//****************************************************** */
+//LOGIN ENDPOINT
+app.post("/login", (req, res) => {
+  console.log(req.body.username)
+  res.cookie("username", req.body.username)
+  res.redirect("/urls")
+})
+
+//****************************************************** */
+//LOGOUT ENDPOINT
+app.post("/logout", (req, res) => {
+  res.clearCookie("username", req.body.username)
+  res.redirect("/urls")
+})
+
+
 //****************************************************** */
 //UPDATE
 app.post("/urls/:shortURL/update", (req, res) => {
@@ -80,7 +105,11 @@ app.post("/urls/:shortURL/update", (req, res) => {
 //could of use GET route by changing index ejs, update button route and method
 app.post("/urls/:shortURL", (req, res) => {
 
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]/* What goes here? */ };
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+    username: req.cookies["username"]/* What goes here? */
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -95,6 +124,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   console.log("AFTER", urlDatabase)
   res.redirect("/urls");
 });
+
+
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   //dont need res.send("Ok") because we redirecting insted
