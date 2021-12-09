@@ -8,17 +8,15 @@
       </form>
       <%= users.email %>
       <%}else {%>
-        <form class="form-inline" action="/login" method="POST">
-          <div class="form-group mb-2">
-            
-            <label for="username">Enter a Username:</label>
-            <input class="form-control" type="text" name="username" placeholder="username" style="width: 100px; margin: 1em">
-            <button type="submit" class="btn btn-primary">Submit</button>
-          </div>
-          </form>
+        
+            <button type="button" class="btn btn-outline-primary">Primary<a href="http://localhost:8080/login">Login</a></button>
+         
+            <button type="button" class="btn btn-outline-primary">Primary <a href="http://localhost:8080/register">Register</a> </button>
+          
       <% }%>
 
-    
+      
+
 
 
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">

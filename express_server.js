@@ -1,3 +1,4 @@
+//RANDOMSTRING FUNCTION  (used to generaate user id )
 function generateRandomString() {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = "";
@@ -17,7 +18,7 @@ function findEmail(emails, users) {
   }
   return false;
 };
-
+//USERS OBJECT  (DATABASE)
 const users = {
   "userRandomID": {
     id: "userRandomID",
@@ -36,7 +37,9 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser')
+const morgan = require('morgan');
 
+app.use(morgan('dev'));
 app.use(cookieParser())
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -74,6 +77,13 @@ app.get("/urls/:shortURL", (req, res) => {
     users: users[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
+});
+
+//************************************************************ */
+//LOGIN ENDPOINT GET
+app.get("/login", (req, res) => {
+  const templateVars = { users: users[req.cookies.user_id] }
+  res.render("urls_login", templateVars)
 });
 
 //.json of database
