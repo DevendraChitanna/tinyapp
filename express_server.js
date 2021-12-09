@@ -6,6 +6,19 @@ function generateRandomString() {
   }
   return result;
 }
+
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+}
 //************************************************ */
 const express = require("express");
 const app = express();
@@ -31,13 +44,13 @@ app.get("/", (req, res) => {
 //***************************************************** */
 //Home page - list of all URLS
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, users: users[req.cookies.user_id] };
   res.render("urls_index", templateVars);
 });
 //*************************************************** */
 //Page to create new URLs
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] }
+  const templateVars = { users: users[req.cookies.user_id] }
   res.render("urls_new", templateVars);
 });
 //***************************************************** */
@@ -47,7 +60,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],/* What goes here? */
-    username: req.body.username
+    users: users[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
 });
@@ -76,6 +89,31 @@ app.get("/set", (req, res) => {
 app.get("/fetch", (req, res) => {
   res.send(`a = ${a}`);
 });
+//******************************************************* */
+//REGISTER ENDPOINT
+app.get("/register", (req, res) => {
+  const templateVars = { users: users[req.cookies.user_id] }
+  res.render("urls_register", templateVars);
+});
+
+//REGISTER POST
+app.post("/register", (req, res) => {
+  console.log(req.body)
+  const id = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+  users[id] = {
+    id,
+    email,
+    password
+  }
+  console.log(users)
+  res.cookie("user_id", id)
+  res.redirect("/urls")
+
+});
+
+
 
 //****************************************************** */
 //LOGIN ENDPOINT
@@ -88,7 +126,7 @@ app.post("/login", (req, res) => {
 //****************************************************** */
 //LOGOUT ENDPOINT
 app.post("/logout", (req, res) => {
-  res.clearCookie("username", req.body.username)
+  res.clearCookie("user_id",)
   res.redirect("/urls")
 })
 
@@ -105,12 +143,11 @@ app.post("/urls/:shortURL/update", (req, res) => {
 //could of use GET route by changing index ejs, update button route and method
 app.post("/urls/:shortURL", (req, res) => {
 
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]/* What goes here? */
-  };
-  res.render("urls_show", templateVars);
+
+  const shortURL = req.params.shortURL
+  /* What goes here? */
+
+  res.redirect(`/urls/${shortURL}`);
 });
 
 
