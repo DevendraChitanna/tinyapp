@@ -7,6 +7,17 @@ function generateRandomString() {
   return result;
 }
 
+//***********************************
+//email lookup function
+function findEmail(emails, users) {
+  for (const user in users) {
+    if (users[user].email === emails) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const users = {
   "userRandomID": {
     id: "userRandomID",
@@ -98,17 +109,34 @@ app.get("/register", (req, res) => {
 
 //REGISTER POST
 app.post("/register", (req, res) => {
-  console.log(req.body)
-  const id = generateRandomString();
-  const email = req.body.email;
-  const password = req.body.password;
-  users[id] = {
-    id,
-    email,
-    password
+  //1. Check for the empty email or password
+  if (req.body.email === "" || req.body.password === "") {
+    return res.status(403).send("Please enter email and password");
   }
+  //2. If the email and password are not empty 
+  if (req.body.email && req.body.password) {
+    //if email is found in users object return error code
+    if (findEmail(req.body.email, users)) {
+      return res.status(403).send("User Alredy registered! Please try diffrent values")
+      //otherwise generate a new user id and add info into users object
+      //And set the cookie :)
+    } else {
+      console.log(req.body)
+      const id = generateRandomString();
+      const email = req.body.email;
+      const password = req.body.password;
+      users[id] = {
+        id,
+        email,
+        password
+      }
+      res.cookie("user_id", id)
+
+    }
+  }
+  //Then redirect to /urls(home page)
+
   console.log(users)
-  res.cookie("user_id", id)
   res.redirect("/urls")
 
 });
