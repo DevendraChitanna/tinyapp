@@ -10,7 +10,7 @@ function generateRandomString() {
 
 //***********************************
 //email lookup function
-function findEmail(emails, users) {
+const findEmail = function (emails, users) {
   for (const user in users) {
     if (users[user].email === emails) {
       return true;
@@ -18,6 +18,16 @@ function findEmail(emails, users) {
   }
   return false;
 };
+
+
+const getUserByEmail = (email, userDatabase) => {
+  for (let user in userDatabase) {
+    if (email === userDatabase[user].email) {
+      return userDatabase[user].id
+    }
+  }
+}
+
 //USERS OBJECT  (DATABASE)
 const users = {
   "userRandomID": {
@@ -27,8 +37,8 @@ const users = {
   },
   "user2RandomID": {
     id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
+    email: "test@test.com",
+    password: "1234"
   }
 }
 //************************************************ */
@@ -156,9 +166,22 @@ app.post("/register", (req, res) => {
 //****************************************************** */
 //LOGIN ENDPOINT
 app.post("/login", (req, res) => {
-  console.log(req.body.username)
-  res.cookie("username", req.body.username)
-  res.redirect("/urls")
+  //check if email and password match users OBJ
+  let foundUser = getUserByEmail(req.body.email, users)
+  if (foundUser) {
+    if (users[foundUser].password === req.body.password) {
+      res.cookie("user_id", foundUser)
+      res.redirect(`/urls`)
+    } else {
+      res.status(403)
+      res.send("Password is Incorrect")
+    }
+  } else {
+    res.status(403);
+    res.send("Email not found")
+  }
+
+
 })
 
 //****************************************************** */
