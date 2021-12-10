@@ -29,14 +29,15 @@ const findEmail = function (emails, users) {
   return false;
 };
 
-
-const getUserByEmail = (email, userDatabase) => {
-  for (let user in userDatabase) {
-    if (email === userDatabase[user].email) {
-      return userDatabase[user].id
-    }
-  }
-}
+//******************************************** */
+// const getUserByEmail = (email, userDatabase) => {
+//   for (let user in userDatabase) {
+//     if (email === userDatabase[user].email) {
+//       return userDatabase[user].id
+//     }
+//   }
+// }
+//DELETE*********************************
 
 //USERS OBJECT  (DATABASE)
 const users = {
@@ -62,13 +63,14 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser')
+const CookieSession = require("cookie-session")
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
+const getUserByEmail = require("./helpers")
 
 
 app.use(morgan('dev'));
-app.use(cookieParser())
+app.use(CookieSession({ name: 'session', keys: ['key1', 'key2'] }))
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -93,13 +95,13 @@ app.get("/", (req, res) => {
 //Home page - list of all URLS
 app.get("/urls", (req, res) => {
   //not logged in
-  if (!req.cookies.user_id) {
-    return res.send("You must be logged in to see URLs, Please log in or Register")
+  if (!req.session.user_id) {
+    return res.send(`<html><body> <a href="http://localhost:8080/login">Login here</a> <---Login OR Register--->   <a href="http://localhost:8080/register">Register here</a>  </body></html>\n`)
   }
   //logged in 
 
-  const urlsOfUser = urlsForUser(req.cookies.user_id);
-  const user = users[req.cookies.user_id];
+  const urlsOfUser = urlsForUser(req.session.user_id);
+  const user = users[req.session.user_id];
   console.log("USER IS HERE", urlsOfUser)
   let templateVars = {
     urls: urlsOfUser,
@@ -113,10 +115,10 @@ app.get("/urls", (req, res) => {
 //*************************************************** */
 //Page to create new URLs
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.redirect("/login")
   }
-  const templateVars = { user: users[req.cookies.user_id] }
+  const templateVars = { user: users[req.session.user_id] }
   res.render("urls_new", templateVars);
 });
 //***************************************************** */
@@ -126,7 +128,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,/* What goes here? */
-    user: users[req.cookies.user_id]
+    user: users[req.session.user_id]
   };
   res.render("urls_show", templateVars);
 });
@@ -134,10 +136,10 @@ app.get("/urls/:shortURL", (req, res) => {
 //************************************************************ */
 //LOGIN ENDPOINT GET
 app.get("/login", (req, res) => {
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     return res.redirect("/urls")
   }
-  const templateVars = { user: users[req.cookies.user_id] }
+  const templateVars = { user: users[req.session.user_id] }
   res.render("urls_login", templateVars)
 });
 
@@ -168,10 +170,10 @@ app.get("/fetch", (req, res) => {
 //******************************************************* */
 //REGISTER ENDPOINT
 app.get("/register", (req, res) => {
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     return res.redirect("/urls")
   }
-  const templateVars = { user: users[req.cookies.user_id] }
+  const templateVars = { user: users[req.session.user_id] }
   res.render("urls_register", templateVars);
 });
 
@@ -201,7 +203,8 @@ app.post("/register", (req, res) => {
         password: hashedPassword,
       }
       console.log(users)
-      res.cookie("user_id", id)
+      // res.session("user_id", id)
+      req.session.user_id = id
 
     }
   }
@@ -222,15 +225,16 @@ app.post("/login", (req, res) => {
   if (foundUser) {
     if (bcrypt.compareSync(req.body.password, users[foundUser].password)) {
       // if (users[foundUser].password === req.body.password) {
-      res.cookie("user_id", foundUser)
+      // res.session("user_id", foundUser)
+      req.session.user_id = foundUser
       res.redirect(`/urls`)
     } else {
       res.status(403)
-      res.send("Password is Incorrect")
+      res.send(`<html><body> <a href="http://localhost:8080/login">Login here</a> <---Login|  Password is incorrect   |Register--->   <a href="http://localhost:8080/register">Register here</a>  </body></html>\n`)
     }
   } else {
     res.status(403);
-    res.send("Email not found")
+    res.send(`<html><body> <a href="http://localhost:8080/login">Login here</a> <---Login|   Email not found    |Register--->   <a href="http://localhost:8080/register">Register here</a>  </body></html>\n`)
   }
 
 
@@ -239,7 +243,7 @@ app.post("/login", (req, res) => {
 //****************************************************** */
 //LOGOUT ENDPOINT
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id",)
+  req.session.user_id = null;
   res.redirect("/urls")
 })
 
@@ -247,8 +251,8 @@ app.post("/logout", (req, res) => {
 //****************************************************** */
 //UPDATE
 app.post("/urls/:shortURL/update", (req, res) => {
-  if (!req.cookies.user_id) {
-    return res.send("Please login to Update URLS")
+  if (!req.session.user_id) {
+    return res.send(`<html><body> <a href="http://localhost:8080/login">Login here</a> <---Login|    Please login or Register to update URLs     |Register--->   <a href="http://localhost:8080/register">Register here</a>  </body></html>\n`)
   }
   console.log(req.params.shortURL)
   urlDatabase[req.params.shortURL].longURL = req.body.longURL
@@ -273,8 +277,8 @@ app.post("/urls/:shortURL", (req, res) => {
 //********************************************************************** */
 //: after colon is a variable
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (!req.cookies.user_id) {
-    return res.send("Please login to Delete Urls")
+  if (!req.session.user_id) {
+    return res.send(`<html><body> <a href="http://localhost:8080/login">Login here</a> <---Login|   Please Login or Register to Delete URLs    |Register--->   <a href="http://localhost:8080/register">Register here</a>  </body></html>\n`)
   }
   console.log("BEFORE", urlDatabase);
   delete urlDatabase[req.params.shortURL]
@@ -296,7 +300,7 @@ app.post("/urls", (req, res) => {
   let newShortURL = generateRandomString()
   urlDatabase[newShortURL] = {
     longURL: req.body.longURL,
-    userID: req.cookies.user_id
+    userID: req.session.user_id
   }
 
 
