@@ -29,15 +29,7 @@ const findEmail = function (emails, users) {
   return false;
 };
 
-//******************************************** */
-// const getUserByEmail = (email, userDatabase) => {
-//   for (let user in userDatabase) {
-//     if (email === userDatabase[user].email) {
-//       return userDatabase[user].id
-//     }
-//   }
-// }
-//DELETE*********************************
+
 
 //USERS OBJECT  (DATABASE)
 const users = {
@@ -102,7 +94,6 @@ app.get("/urls", (req, res) => {
 
   const urlsOfUser = urlsForUser(req.session.user_id);
   const user = users[req.session.user_id];
-  console.log("USER IS HERE", urlsOfUser)
   let templateVars = {
     urls: urlsOfUser,
     user: user,
@@ -124,10 +115,10 @@ app.get("/urls/new", (req, res) => {
 //***************************************************** */
 //get url page with short url as a variable(shortURL is the key)
 app.get("/urls/:shortURL", (req, res) => {
-  //what does this line do? and what is the req.params. Why do we need it? 
+
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,/* What goes here? */
+    longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[req.session.user_id]
   };
   res.render("urls_show", templateVars);
@@ -143,7 +134,7 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars)
 });
 
-//.json of database
+//.json of urlDatabase
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -153,7 +144,6 @@ app.get("/hello", (req, res) => {
 });
 //*********************************************** */
 //used in urls_show
-//the : means shortURL is a variable
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL
   res.redirect(longURL);
@@ -192,7 +182,6 @@ app.post("/register", (req, res) => {
       //otherwise generate a new user id and add info into users object
       //And set the cookie :)
     } else {
-      console.log(req.body)
       const id = generateRandomString();
       const email = req.body.email;
       const password = req.body.password;
@@ -202,15 +191,11 @@ app.post("/register", (req, res) => {
         email,
         password: hashedPassword,
       }
-      console.log(users)
-      // res.session("user_id", id)
       req.session.user_id = id
 
     }
   }
   //Then redirect to /urls(home page)
-
-  console.log(users)
   res.redirect("/urls")
 
 });
@@ -254,19 +239,15 @@ app.post("/urls/:shortURL/update", (req, res) => {
   if (!req.session.user_id) {
     return res.send(`<html><body> <a href="http://localhost:8080/login">Login here</a> <---Login|    Please login or Register to update URLs     |Register--->   <a href="http://localhost:8080/register">Register here</a>  </body></html>\n`)
   }
-  console.log(req.params.shortURL)
   urlDatabase[req.params.shortURL].longURL = req.body.longURL
-  console.log(urlDatabase)
   res.redirect("/urls")
 })
 //**************************************************************** */
 // //REDIRECT when click update from index page
-//could of use GET route by changing index ejs, update button route and method
 app.post("/urls/:shortURL", (req, res) => {
 
 
   const shortURL = req.params.shortURL
-  /* What goes here? */
 
   res.redirect(`/urls/${shortURL}`);
 });
@@ -275,38 +256,24 @@ app.post("/urls/:shortURL", (req, res) => {
 
 
 //********************************************************************** */
-//: after colon is a variable
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (!req.session.user_id) {
     return res.send(`<html><body> <a href="http://localhost:8080/login">Login here</a> <---Login|   Please Login or Register to Delete URLs    |Register--->   <a href="http://localhost:8080/register">Register here</a>  </body></html>\n`)
   }
-  console.log("BEFORE", urlDatabase);
   delete urlDatabase[req.params.shortURL]
-  console.log("AFTER", urlDatabase)
   res.redirect("/urls");
 });
 
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  //dont need res.send("Ok") because we redirecting insted
-  // res.send("Ok");         // Respond with 'Ok' (we will replace this)
 
-  //Update server shortURl and longUrl are saved to urlDatabase,**Double check!!!
-  //ADDING TO urlDATABASE
-  //Do i need to stringify???
-  //TAKE IN DATA USE REQ
-  //PUSH DATA USE RES, also redirect or render
   let newShortURL = generateRandomString()
   urlDatabase[newShortURL] = {
     longURL: req.body.longURL,
     userID: req.session.user_id
   }
 
-
-
-  //respond with a redirection to /urls/:shortURL, where shortURL is the random string
-  //do i need the colen after urls??
+  //respond with a redirection to /urls/:shortURL, where newshortURL is the random string
   res.redirect(`/urls/${newShortURL}`)
 
 });
