@@ -1,3 +1,13 @@
+function urlsForUser(user_id) {
+  let userURLS = {}
+  for (const shortURL in urlDatabase) {
+    if (user_id === urlDatabase[shortURL].userID)
+      userURLS[shortURL] = urlDatabase[shortURL]
+
+  }
+  return userURLS
+}
+
 //RANDOMSTRING FUNCTION  (used to generaate user id )
 function generateRandomString() {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -57,8 +67,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
+  }
 };
 //*************************************************** */
 //Request and Resolve
@@ -68,13 +84,31 @@ app.get("/", (req, res) => {
 //***************************************************** */
 //Home page - list of all URLS
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, users: users[req.cookies.user_id] };
+  //not logged in
+  if (!req.cookies.user_id) {
+    return res.send("You must be logged in to see URLs, Please log in or Register")
+  }
+  //logged in 
+
+  const urlsOfUser = urlsForUser(req.cookies.user_id);
+  const user = users[req.cookies.user_id];
+  console.log("USER IS HERE", urlsOfUser)
+  let templateVars = {
+    urls: urlsOfUser,
+    user: user,
+  };
   res.render("urls_index", templateVars);
+  //it means that user is logged in. WE need to get the urls of that user from the database
+
+
 });
 //*************************************************** */
 //Page to create new URLs
 app.get("/urls/new", (req, res) => {
-  const templateVars = { users: users[req.cookies.user_id] }
+  if (!req.cookies.user_id) {
+    return res.redirect("/login")
+  }
+  const templateVars = { user: users[req.cookies.user_id] }
   res.render("urls_new", templateVars);
 });
 //***************************************************** */
@@ -83,8 +117,8 @@ app.get("/urls/:shortURL", (req, res) => {
   //what does this line do? and what is the req.params. Why do we need it? 
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],/* What goes here? */
-    users: users[req.cookies.user_id]
+    longURL: urlDatabase[req.params.shortURL].longURL,/* What goes here? */
+    user: users[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
 });
@@ -92,7 +126,10 @@ app.get("/urls/:shortURL", (req, res) => {
 //************************************************************ */
 //LOGIN ENDPOINT GET
 app.get("/login", (req, res) => {
-  const templateVars = { users: users[req.cookies.user_id] }
+  if (req.cookies.user_id) {
+    return res.redirect("/urls")
+  }
+  const templateVars = { user: users[req.cookies.user_id] }
   res.render("urls_login", templateVars)
 });
 
@@ -108,7 +145,7 @@ app.get("/hello", (req, res) => {
 //used in urls_show
 //the : means shortURL is a variable
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]
+  const longURL = urlDatabase[req.params.shortURL].longURL
   res.redirect(longURL);
 });
 
@@ -123,12 +160,16 @@ app.get("/fetch", (req, res) => {
 //******************************************************* */
 //REGISTER ENDPOINT
 app.get("/register", (req, res) => {
-  const templateVars = { users: users[req.cookies.user_id] }
+  if (req.cookies.user_id) {
+    return res.redirect("/urls")
+  }
+  const templateVars = { user: users[req.cookies.user_id] }
   res.render("urls_register", templateVars);
 });
 
 //REGISTER POST
 app.post("/register", (req, res) => {
+
   //1. Check for the empty email or password
   if (req.body.email === "" || req.body.password === "") {
     return res.status(403).send("Please enter email and password");
@@ -195,8 +236,12 @@ app.post("/logout", (req, res) => {
 //****************************************************** */
 //UPDATE
 app.post("/urls/:shortURL/update", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.send("Please login to Update URLS")
+  }
   console.log(req.params.shortURL)
-  urlDatabase[req.params.shortURL] = req.body.longURL
+  urlDatabase[req.params.shortURL].longURL = req.body.longURL
+  console.log(urlDatabase)
   res.redirect("/urls")
 })
 //**************************************************************** */
@@ -217,6 +262,9 @@ app.post("/urls/:shortURL", (req, res) => {
 //********************************************************************** */
 //: after colon is a variable
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.send("Please login to Delete Urls")
+  }
   console.log("BEFORE", urlDatabase);
   delete urlDatabase[req.params.shortURL]
   console.log("AFTER", urlDatabase)
@@ -235,7 +283,11 @@ app.post("/urls", (req, res) => {
   //TAKE IN DATA USE REQ
   //PUSH DATA USE RES, also redirect or render
   let newShortURL = generateRandomString()
-  urlDatabase[newShortURL] = req.body.longURL
+  urlDatabase[newShortURL] = {
+    longURL: req.body.longURL,
+    userID: req.cookies.user_id
+  }
+
 
 
   //respond with a redirection to /urls/:shortURL, where shortURL is the random string
