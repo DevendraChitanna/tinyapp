@@ -49,7 +49,13 @@ const users = {
     id: "user2RandomID",
     email: "test@test.com",
     password: "1234"
+  },
+  r0SKE7: {
+    id: 'r0SKE7',
+    email: '1234@1234',
+    password: '$2a$10$cjzabQ4nYPMY5yQ7eplcnuKEfR4Vf37zKGzE/CqzcL7wqoJ0dDmC2'
   }
+
 }
 //************************************************ */
 const express = require("express");
@@ -58,6 +64,8 @@ const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser')
 const morgan = require('morgan');
+const bcrypt = require('bcryptjs');
+
 
 app.use(morgan('dev'));
 app.use(cookieParser())
@@ -186,11 +194,13 @@ app.post("/register", (req, res) => {
       const id = generateRandomString();
       const email = req.body.email;
       const password = req.body.password;
+      const hashedPassword = bcrypt.hashSync(password, 10);
       users[id] = {
         id,
         email,
-        password
+        password: hashedPassword,
       }
+      console.log(users)
       res.cookie("user_id", id)
 
     }
@@ -210,7 +220,8 @@ app.post("/login", (req, res) => {
   //check if email and password match users OBJ
   let foundUser = getUserByEmail(req.body.email, users)
   if (foundUser) {
-    if (users[foundUser].password === req.body.password) {
+    if (bcrypt.compareSync(req.body.password, users[foundUser].password)) {
+      // if (users[foundUser].password === req.body.password) {
       res.cookie("user_id", foundUser)
       res.redirect(`/urls`)
     } else {
