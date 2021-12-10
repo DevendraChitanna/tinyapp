@@ -182,13 +182,13 @@ app.post("/register", (req, res) => {
 
   //1. Check for the empty email or password
   if (req.body.email === "" || req.body.password === "") {
-    return res.status(403).send("Please enter email and password");
+    return res.status(403).send(`<html><body> <a href="http://localhost:8080/login">Login here</a> <---Login    EMAIL OR PASSWORD WERE EMPTY     Register--->   <a href="http://localhost:8080/register">Register here</a>  </body></html>\n`);
   }
   //2. If the email and password are not empty 
   if (req.body.email && req.body.password) {
     //if email is found in users object return error code
     if (findEmail(req.body.email, users)) {
-      return res.status(403).send("User Alredy registered! Please try diffrent values")
+      return res.status(403).send(`<html><body> <a href="http://localhost:8080/login">Login here</a> <---Login|  User Exists! Login in or create a new account!    |Register--->   <a href="http://localhost:8080/register">Register here</a>  </body></html>\n`)
       //otherwise generate a new user id and add info into users object
       //And set the cookie :)
     } else {
